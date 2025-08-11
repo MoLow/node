@@ -918,6 +918,11 @@ EnvironmentOptionsParser::EnvironmentOptionsParser() {
             &EnvironmentOptions::test_global_setup_path,
             kAllowedInEnvvar,
             OptionNamespaces::kTestRunnerNamespace);
+  AddOption("--test-rerun",
+            "specifies the path to the rerun state file",
+            &EnvironmentOptions::test_rerun,
+            kAllowedInEnvvar,
+            OptionNamespaces::kTestRunnerNamespace);
   AddOption("--test-udp-no-try-send",
             "",  // For testing only.
             &EnvironmentOptions::test_udp_no_try_send,
