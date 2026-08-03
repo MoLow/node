@@ -11,7 +11,7 @@ test('t.log() validates its arguments', (t) => {
   assert.throws(() => t.log(123), { code: 'ERR_INVALID_ARG_TYPE' });
 });
 
-test('built-in reporters render test:log like diagnostics', () => {
+test('built-in reporters render test:log', () => {
   const tap = spawnSync(process.execPath, ['--test', '--test-reporter=tap', fixture]);
   assert.match(tap.stdout.toString(), /# hello/);
   assert.match(tap.stdout.toString(), /# suite message/);
@@ -22,6 +22,28 @@ test('built-in reporters render test:log like diagnostics', () => {
 
   const junit = spawnSync(process.execPath, ['--test', '--test-reporter=junit', fixture]);
   assert.match(junit.stdout.toString(), /<!-- hello -->/);
+});
+
+test('reporters that structure their output place a log with its own test', () => {
+  // 'logger' logs while its earlier-declared sibling 'slow' is still running, so
+  // the log arrives long before 'logger' is reported. Reporters that group their
+  // output by test hold it until then; `spec` stays live by design.
+  const tap = spawnSync(process.execPath, ['--test', '--test-reporter=tap', fixture]).stdout.toString();
+  assert.ok(
+    tap.indexOf('ok 2 - logger') < tap.indexOf('# hello'),
+    `a log must follow its own test:\n${tap}`,
+  );
+  assert.ok(
+    tap.indexOf('ok 1 - my suite') < tap.indexOf('# suite message'),
+    `a suite's log must follow the suite:\n${tap}`,
+  );
+
+  const junit = spawnSync(process.execPath, ['--test', '--test-reporter=junit', fixture]).stdout.toString();
+  assert.match(
+    junit,
+    /<testcase name="logger"[^>]*>\s*<!-- hello -->\s*<!-- warned -->\s*<\/testcase>/,
+    `a log must land inside its own testcase:\n${junit}`,
+  );
 });
 
 test('test:log is emitted immediately with the expected payload', async () => {
